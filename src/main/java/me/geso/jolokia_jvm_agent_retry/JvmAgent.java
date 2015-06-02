@@ -8,10 +8,10 @@ import java.io.IOException;
 // This module retries every 1 sec when got BindException.
 public class JvmAgent {
 	public static void premain(String agentArgs) {
-		long sleep = Long.valueOf(System.getProperty("jolokia-retry.sleep", "1000"));
+		long interval = Long.valueOf(System.getProperty("jolokia-retry.interval", "1000"));
 		Thread starterThread = new Thread(() -> {
 			try {
-				start(agentArgs, sleep);
+				start(agentArgs, interval);
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -20,7 +20,7 @@ public class JvmAgent {
 		starterThread.start();
 	}
 
-	public static void start(String agentArgs, long sleep) throws InterruptedException {
+	public static void start(String agentArgs, long interval) throws InterruptedException {
 		JvmAgentConfig pConfig = new JvmAgentConfig(agentArgs);
 		while (true) {
 			try {
@@ -34,7 +34,7 @@ public class JvmAgent {
 				System.err.println("Could not start Jolokia agent: " + exp);
 			} catch (java.net.BindException exp) {
 				System.err.println("Could not start Jolokia agent: " + exp + "... retrying");
-				Thread.sleep(sleep);
+				Thread.sleep(interval);
 				continue;
 			} catch (IOException exp) {
 				System.err.println("Could not start Jolokia agent: " + exp);

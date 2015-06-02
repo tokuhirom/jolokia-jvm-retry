@@ -8,7 +8,7 @@ This library retries to start jolokia-jvm-agent after every sec if binding faile
 
 There are some system properties.
 
-### `jolokia-retry.sleep`
+### `jolokia-retry.interval`
 
 Retry interval in millisecs.
 
