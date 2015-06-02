@@ -8,8 +8,8 @@ import java.io.IOException;
 // This module retries every 1 sec when got BindException.
 public class JvmAgent {
 	public static void premain(String agentArgs) {
-		long interval = Long.valueOf(System.getProperty("jolokia-retry.interval", "1000"));
-		long maxRetries = Long.valueOf(System.getProperty("jolokia-retry.maxRetries", "100"));
+		long interval = Long.parseLong(System.getProperty("jolokia-retry.interval", "1000"));
+		long maxRetries = Long.parseLong(System.getProperty("jolokia-retry.maxRetries", "100"));
 		Thread starterThread = new Thread(() -> {
 			try {
 				start(agentArgs, interval, maxRetries);
