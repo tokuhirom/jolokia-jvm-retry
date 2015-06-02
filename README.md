@@ -14,6 +14,12 @@ Retry interval in millisecs.
 
 (Default: 1,000msec)
 
+### `jolokia-retry.maxRetries`
+
+Max retry counts.
+
+(Default: 100)
+
 ## LICENSE
 
     The MIT License (MIT)

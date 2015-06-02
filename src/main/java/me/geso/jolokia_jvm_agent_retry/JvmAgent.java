@@ -9,9 +9,10 @@ import java.io.IOException;
 public class JvmAgent {
 	public static void premain(String agentArgs) {
 		long interval = Long.valueOf(System.getProperty("jolokia-retry.interval", "1000"));
+		long maxRetries = Long.valueOf(System.getProperty("jolokia-retry.maxRetries", "100"));
 		Thread starterThread = new Thread(() -> {
 			try {
-				start(agentArgs, interval);
+				start(agentArgs, interval, maxRetries);
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -20,9 +21,9 @@ public class JvmAgent {
 		starterThread.start();
 	}
 
-	public static void start(String agentArgs, long interval) throws InterruptedException {
+	public static void start(String agentArgs, long interval, long maxRetries) throws InterruptedException {
 		JvmAgentConfig pConfig = new JvmAgentConfig(agentArgs);
-		while (true) {
+		for (int i=0; i<maxRetries; ++i) {
 			try {
 				JolokiaServer server = new JolokiaServer(pConfig,true);
 
