@@ -1,9 +1,20 @@
 apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply plugin: 'findbugs'
+apply plugin: 'checkstyle'
 
+group = 'me.geso.jolokia_jvm_agent_retry'
+archivesBaseName = "jolokia-jvm-retry"
 version='1.0.0'
+description=archivesBaseName
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
-    jcenter()
+    maven { url "http://repo.maven.apache.org/maven2" }
 }
 
 dependencies {
@@ -12,14 +23,101 @@ dependencies {
 }
 
 
-task fatJar(type: Jar) {
-    manifest {
-        attributes 'Implementation-Title': project.name,  
-        	'Implementation-Version': version,
-          "Premain-Class": "me.geso.jolokia_jvm_agent_retry.JvmAgent"
-    }
-    baseName = project.name
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
+findbugsMain {
+  ignoreFailures = false
+  effort = "max"
 }
-build.dependsOn fatJar
+
+tasks.withType(FindBugs) {
+  reports {
+    xml.enabled = false
+    html.enabled = true
+  }
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+
+signing {
+    sign configurations.archives
+}
+
+try {
+  uploadArchives {
+    repositories {
+      mavenDeployer {
+        beforeDeployment {
+          MavenDeployment deployment -> signing.signPom(deployment)
+        }
+
+        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
+
+        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
+
+        pom.project {
+          name 'jolokia-jvm-retry'
+          packaging 'jar'
+          // optionally artifactId can be defined here 
+          description 'jolokia-jvm + retry'
+          url 'http://github.com/tokuhirom/jolokia-jvm-retry/'
+
+          scm {
+            url 'https://github.com/tokuhirom/jolokia-jvm-retry/'
+            connection 'scm:git:git://github.com/tokuhirom/jolokia-jvm-retry.git'
+            developerConnection 'scm:git:git@github.com:tokuhirom/jolokia-jvm-retry.git'
+          }
+
+          licenses {
+            license {
+              name 'MIT License'
+              url 'http://www.opensource.org/licenses/mit-license.php'
+            }
+          }
+
+          developers {
+            developer {
+              id 'tokuhirom'
+              name 'Tokuhiro Matsuno'
+              email 'tokuhirom@gmail.com'
+            }
+          }
+        }
+      }
+    }
+  }
+} catch (MissingPropertyException mpe) {
+  if (System.env['CI']) {
+    println("Run on CI");
+  } else {
+    throw mpe;
+  }
+}
+
+jar {
+  manifest {
+    attributes 'Implementation-Title': project.name,  
+      'Implementation-Version': version,
+      "Premain-Class": "me.geso.jolokia_jvm_agent_retry.JvmAgent"
+  }
+
+  from {
+    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+  }
+}
+
